@@ -1,6 +1,6 @@
 # 🎵 CloudBeats
 
-Welcome to **CloudBeats**! This is your ultimate music companion that lets you stream your entire music library directly from your Microsoft OneDrive. No need to worry about storage limits on your phone—just upload your favorite tracks to OneDrive and stream them on the go!
+Welcome to **CloudBeats**! This is your ultimate music companion that lets you stream your entire music library directly from your Microsoft OneDrive. No need to worry about storage limits on your phone or paying streaming platforms like spotify etc. — just upload your favorite tracks to OneDrive and stream them on the go!
 
 ## ✨ Features
 
