@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
@@ -86,7 +87,7 @@ fun MiniPlayerBar(
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Album art placeholder
+                    // Album art
                     Box(
                         modifier = Modifier
                             .size(40.dp)
@@ -94,12 +95,21 @@ fun MiniPlayerBar(
                             .background(DarkSurfaceElevated),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.MusicNote,
-                            contentDescription = null,
-                            tint = Purple60,
-                            modifier = Modifier.size(20.dp)
-                        )
+                        if (song.albumArtUrl != null) {
+                            coil.compose.AsyncImage(
+                                model = song.albumArtUrl,
+                                contentDescription = "Album Art",
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.MusicNote,
+                                contentDescription = null,
+                                tint = Purple60,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.width(10.dp))

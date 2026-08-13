@@ -7,9 +7,13 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.ResolvingDataSource
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import com.cloudbeats.app.data.repository.MusicRepository
 import dagger.hilt.android.AndroidEntryPoint
-
-/**
+import kotlinx.coroutines.runBlocking
+import javax.inject.Inject/**
  * Background media playback service using Media3.
  *
  * This service keeps music playing when the app is in the background,
@@ -19,14 +23,46 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class CloudBeatsService : MediaSessionService() {
 
+    @Inject
+    lateinit var musicRepository: MusicRepository
+
     private var mediaSession: MediaSession? = null
     private var player: ExoPlayer? = null
 
     override fun onCreate() {
         super.onCreate()
 
+        // Configure data source for custom cloudbeats:// URIs
+        val defaultDataSourceFactory = DefaultDataSource.Factory(this)
+        val resolvingDataSourceFactory = ResolvingDataSource.Factory(
+            defaultDataSourceFactory,
+            ResolvingDataSource.Resolver { dataSpec ->
+                if (dataSpec.uri.scheme == "cloudbeats") {
+                    val oneDriveId = dataSpec.uri.host
+                    if (oneDriveId != null) {
+                        val url = runBlocking {
+                            val song = musicRepository.getSongById(oneDriveId)
+                            if (song != null) {
+                                musicRepository.getStreamingUrl(song).getOrElse { "" }
+                            } else {
+                                ""
+                            }
+                        }
+                        if (url.isNotEmpty()) {
+                            return@Resolver dataSpec.buildUpon().setUri(url).build()
+                        }
+                    }
+                }
+                dataSpec
+            }
+        )
+        
+        val mediaSourceFactory = DefaultMediaSourceFactory(this)
+            .setDataSourceFactory(resolvingDataSourceFactory)
+
         // Configure ExoPlayer with audio-optimized settings
         player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(mediaSourceFactory)
             .setAudioAttributes(
                 AudioAttributes.Builder()
                     .setUsage(C.USAGE_MEDIA)

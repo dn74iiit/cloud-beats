@@ -90,4 +90,8 @@ interface PlaylistDao {
     /** Touch the updatedAt timestamp of a playlist */
     @Query("UPDATE playlists SET updatedAt = :timestamp WHERE id = :playlistId")
     suspend fun touchPlaylist(playlistId: Long, timestamp: Long = System.currentTimeMillis())
+
+    /** Get a playlist by exact name to prevent duplicates */
+    @Query("SELECT * FROM playlists WHERE name = :name LIMIT 1")
+    suspend fun getPlaylistByName(name: String): PlaylistEntity?
 }

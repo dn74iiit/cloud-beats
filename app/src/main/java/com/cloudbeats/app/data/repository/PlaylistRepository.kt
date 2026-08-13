@@ -28,6 +28,10 @@ class PlaylistRepository @Inject constructor(
         playlistDao.getPlaylistSongCount(playlistId)
 
     suspend fun createPlaylist(name: String): Long {
+        val existing = playlistDao.getPlaylistByName(name)
+        if (existing != null) {
+            return existing.id
+        }
         return playlistDao.createPlaylist(
             PlaylistEntity(name = name)
         )

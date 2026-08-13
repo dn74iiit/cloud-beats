@@ -25,3 +25,7 @@
 
 # Media3
 -keep class androidx.media3.** { *; }
+
+# Fix R8 missing classes
+-dontwarn com.google.auto.value.AutoValue
+-dontwarn reactor.blockhound.integration.**

@@ -103,17 +103,15 @@ class PlaybackManager @Inject constructor(
 
                 if (state == Player.STATE_READY) {
                     _duration.value = controller?.duration ?: 0L
-                } else if (state == Player.STATE_ENDED) {
-                    // Manually advance to next song when current finishes
-                    skipToNext()
                 }
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                // We manage the index manually now, but we can still prefetch
-                val index = _currentIndex.value
-                if (index in _queue.value.indices) {
+                val index = controller?.currentMediaItemIndex ?: -1
+                if (index != -1 && index in _queue.value.indices) {
+                    _currentIndex.value = index
                     val song = _queue.value[index]
+                    _currentSong.value = song
                     
                     // Record play in database
                     scope.launch(Dispatchers.IO) {
@@ -166,10 +164,10 @@ class PlaybackManager @Inject constructor(
             val firstSong = songs.getOrNull(startIndex)
             _currentSong.value = firstSong
 
-            if (firstSong != null) {
-                val mediaItem = createMediaItem(firstSong)
+            if (songs.isNotEmpty()) {
+                val mediaItems = songs.map { createMediaItem(it) }
                 controller?.apply {
-                    setMediaItem(mediaItem)
+                    setMediaItems(mediaItems, startIndex, 0L)
                     prepare()
                     play()
                 }
@@ -178,13 +176,13 @@ class PlaybackManager @Inject constructor(
     }
 
     /**
-     * Create a MediaItem for a song, fetching the streaming URL.
+     * Create a MediaItem for a song, using custom cloudbeats:// URI for dynamic resolution.
      */
-    private suspend fun createMediaItem(song: SongEntity): MediaItem {
+    private fun createMediaItem(song: SongEntity): MediaItem {
         val uri = if (song.isDownloaded && song.localPath != null) {
             song.localPath
         } else {
-            musicRepository.getStreamingUrl(song).getOrElse { "" }
+            "cloudbeats://${song.oneDriveId}"
         }
 
         return MediaItem.Builder()
@@ -195,6 +193,7 @@ class PlaybackManager @Inject constructor(
                     .setTitle(song.title)
                     .setArtist(song.artist)
                     .setAlbumTitle(song.album)
+                    .setArtworkUri(song.albumArtUrl?.let { android.net.Uri.parse(it) })
                     .build()
             )
             .build()
@@ -227,12 +226,7 @@ class PlaybackManager @Inject constructor(
     }
 
     fun skipToNext() {
-        val nextIndex = if (_shuffleEnabled.value) {
-            if (_queue.value.size > 1) (0 until _queue.value.size).filter { it != _currentIndex.value }.random() else 0
-        } else {
-            if (_currentIndex.value + 1 < _queue.value.size) _currentIndex.value + 1 else 0
-        }
-        playQueueItem(nextIndex)
+        controller?.seekToNextMediaItem()
     }
     
     fun skipToPrevious() {
@@ -240,24 +234,13 @@ class PlaybackManager @Inject constructor(
             seekTo(0)
             return
         }
-        val prevIndex = if (_currentIndex.value - 1 >= 0) _currentIndex.value - 1 else _queue.value.size - 1
-        playQueueItem(prevIndex)
+        controller?.seekToPreviousMediaItem()
     }
 
     private fun playQueueItem(index: Int) {
         if (index in _queue.value.indices) {
-            val nextSong = _queue.value[index]
-            _currentIndex.value = index
-            _currentSong.value = nextSong
-
-            scope.launch {
-                val mediaItem = createMediaItem(nextSong)
-                controller?.apply {
-                    setMediaItem(mediaItem)
-                    prepare()
-                    play()
-                }
-            }
+            controller?.seekToDefaultPosition(index)
+            controller?.play()
         }
     }
 
