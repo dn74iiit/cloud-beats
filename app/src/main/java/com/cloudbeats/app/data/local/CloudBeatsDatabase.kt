@@ -18,7 +18,7 @@ import com.cloudbeats.app.data.local.entities.SongEntity
         PlaylistEntity::class,
         PlaylistSongCrossRef::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class CloudBeatsDatabase : RoomDatabase() {

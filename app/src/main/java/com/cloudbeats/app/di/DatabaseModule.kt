@@ -23,7 +23,7 @@ object DatabaseModule {
             context,
             CloudBeatsDatabase::class.java,
             "cloudbeats.db"
-        ).build()
+        ).fallbackToDestructiveMigration().build()
     }
 
     @Provides

@@ -52,6 +52,9 @@ data class SongEntity(
     /** File extension (e.g., "mp3") */
     val fileExtension: String = "mp3",
 
+    /** Date the file was last modified on PC / OneDrive */
+    val dateModified: Long = 0L,
+
     /** Timestamp when this metadata was last synced from OneDrive */
     val lastSynced: Long = System.currentTimeMillis(),
 

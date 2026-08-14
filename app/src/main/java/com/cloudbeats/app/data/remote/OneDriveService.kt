@@ -241,6 +241,15 @@ class OneDriveService @Inject constructor(
         val album = audio?.optString("album", "")?.takeIf { it.isNotBlank() } ?: ""
         val duration = audio?.optLong("duration", 0L)?.times(1000) ?: 0L // Graph returns seconds
 
+        val lastModifiedStr = item.optString("lastModifiedDateTime", "")
+        val dateModified = try {
+            if (lastModifiedStr.isNotEmpty()) {
+                java.time.Instant.parse(lastModifiedStr).toEpochMilli()
+            } else 0L
+        } catch (e: Exception) {
+            0L
+        }
+
         // Extract album art thumbnail if available
         val albumArtUrl = item.optJSONArray("thumbnails")
             ?.optJSONObject(0)
@@ -259,6 +268,7 @@ class OneDriveService @Inject constructor(
             albumArtUrl = albumArtUrl,
             mimeType = mimeType,
             fileExtension = extension,
+            dateModified = dateModified,
             lastSynced = System.currentTimeMillis()
         )
     }

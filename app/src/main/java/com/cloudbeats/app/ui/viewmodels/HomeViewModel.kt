@@ -6,6 +6,7 @@ import com.cloudbeats.app.data.local.entities.PlaylistEntity
 import com.cloudbeats.app.data.local.entities.SongEntity
 import com.cloudbeats.app.data.repository.MusicRepository
 import com.cloudbeats.app.data.repository.PlaylistRepository
+import com.cloudbeats.app.data.remote.SpotifyService
 import com.cloudbeats.app.download.DownloadManager
 import com.cloudbeats.app.download.DownloadState
 import com.cloudbeats.app.player.PlaybackManager
@@ -30,7 +31,8 @@ class HomeViewModel @Inject constructor(
     private val musicRepository: MusicRepository,
     private val playlistRepository: PlaylistRepository,
     private val playbackManager: PlaybackManager,
-    private val downloadManager: DownloadManager
+    private val downloadManager: DownloadManager,
+    private val spotifyService: SpotifyService
 ) : ViewModel() {
 
     // ── Songs List ──
@@ -134,5 +136,36 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             musicRepository.toggleFavorite(songId)
         }
+    }
+
+    // ── Spotify Downloader ──
+
+    private val _spotifyDownloadStatus = MutableStateFlow<String?>(null)
+    val spotifyDownloadStatus: StateFlow<String?> = _spotifyDownloadStatus.asStateFlow()
+
+    private val _isDownloadingSpotify = MutableStateFlow(false)
+    val isDownloadingSpotify: StateFlow<Boolean> = _isDownloadingSpotify.asStateFlow()
+
+    fun downloadFromSpotify(url: String) {
+        if (url.isBlank()) return
+        viewModelScope.launch {
+            _isDownloadingSpotify.value = true
+            _spotifyDownloadStatus.value = "Sending request to backend..."
+            
+            val result = spotifyService.downloadSpotifyLink(url)
+            
+            result.onSuccess {
+                _spotifyDownloadStatus.value = "Success: Download initiated! Syncing library..."
+                syncLibrary()
+            }.onFailure {
+                _spotifyDownloadStatus.value = "Error: ${it.message}"
+            }
+            
+            _isDownloadingSpotify.value = false
+        }
+    }
+
+    fun clearSpotifyDownloadStatus() {
+        _spotifyDownloadStatus.value = null
     }
 }

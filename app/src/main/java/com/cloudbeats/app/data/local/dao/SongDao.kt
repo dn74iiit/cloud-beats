@@ -17,8 +17,8 @@ interface SongDao {
 
     // ── Read Operations ──
 
-    /** Get all songs ordered by title */
-    @Query("SELECT * FROM songs ORDER BY title ASC")
+    /** Get all songs ordered by date modified (newest first) */
+    @Query("SELECT * FROM songs ORDER BY dateModified DESC, title ASC")
     fun getAllSongs(): Flow<List<SongEntity>>
 
     /** Get all songs ordered by artist */
