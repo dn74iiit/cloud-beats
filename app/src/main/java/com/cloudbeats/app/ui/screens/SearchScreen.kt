@@ -45,7 +45,8 @@ import com.cloudbeats.app.ui.viewmodels.HomeViewModel
 fun SearchScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     currentSongId: String?,
-    onSongClick: () -> Unit = {}
+    onSongClick: () -> Unit = {},
+    onOnlineSearchClick: () -> Unit = {}
 ) {
     val searchQuery by viewModel.searchQuery.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
@@ -60,6 +61,15 @@ fun SearchScreen(
             .fillMaxSize()
             .padding(top = 16.dp)
     ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(onClick = onOnlineSearchClick) {
+                Text("Search Online to Download", color = Purple60)
+            }
+        }
+        
         if (selectedSongIds.isNotEmpty()) {
             Row(
                 modifier = Modifier

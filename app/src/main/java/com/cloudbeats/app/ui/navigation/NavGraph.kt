@@ -143,6 +143,9 @@ fun MainNavGraph(
                         currentSongId = currentSong?.oneDriveId,
                         onSongClick = {
                             navController.navigate(Routes.NOW_PLAYING)
+                        },
+                        onOnlineSearchClick = {
+                            navController.navigate(Routes.ONLINE_SEARCH)
                         }
                     )
                 }
@@ -153,6 +156,12 @@ fun MainNavGraph(
 
                 composable(Routes.NOW_PLAYING) {
                     NowPlayingScreen(
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
+                
+                composable(Routes.ONLINE_SEARCH) {
+                    com.cloudbeats.app.ui.screens.OnlineSearchScreen(
                         onBackClick = { navController.popBackStack() }
                     )
                 }

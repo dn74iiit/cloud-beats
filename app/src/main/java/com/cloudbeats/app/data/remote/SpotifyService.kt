@@ -49,4 +49,52 @@ class SpotifyService @Inject constructor(
                 Result.failure(e)
             }
         }
+
+    /**
+     * Search for songs online using the backend.
+     */
+    suspend fun searchOnline(query: String): Result<List<OnlineSong>> =
+        withContext(Dispatchers.IO) {
+            try {
+                val request = Request.Builder()
+                    .url("$BACKEND_URL/api/search?q=$query")
+                    .get()
+                    .build()
+
+                val response = okHttpClient.newCall(request).execute()
+
+                if (response.isSuccessful) {
+                    val responseBody = response.body?.string() ?: ""
+                    val jsonResponse = JSONObject(responseBody)
+                    val resultsArray = jsonResponse.optJSONArray("results")
+                    
+                    val songs = mutableListOf<OnlineSong>()
+                    if (resultsArray != null) {
+                        for (i in 0 until resultsArray.length()) {
+                            val obj = resultsArray.getJSONObject(i)
+                            songs.add(
+                                OnlineSong(
+                                    title = obj.optString("title", ""),
+                                    artist = obj.optString("artist", ""),
+                                    albumArt = obj.optString("album_art", ""),
+                                    url = obj.optString("url", "")
+                                )
+                            )
+                        }
+                    }
+                    Result.success(songs)
+                } else {
+                    Result.failure(Exception("Backend error: ${response.code}"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
 }
+
+data class OnlineSong(
+    val title: String,
+    val artist: String,
+    val albumArt: String,
+    val url: String
+)
