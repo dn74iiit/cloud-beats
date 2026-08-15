@@ -17,7 +17,7 @@ class SpotifyService @Inject constructor(
     companion object {
         // Change this to the IP of your local PC if testing on a real device (e.g., http://192.168.1.5:5000)
         // 10.0.2.2 is the localhost alias for the Android Emulator
-        private const val BACKEND_URL = "http://10.0.2.2:5000"
+        private const val BACKEND_URL = "https://cloudbeats-api.onrender.com"
     }
 
     /**

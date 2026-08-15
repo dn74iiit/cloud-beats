@@ -45,10 +45,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import android.content.Intent
 import android.net.Uri
+import com.cloudbeats.app.update.UpdateManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -201,9 +203,22 @@ fun SettingsScreen(
                                     val json = JSONObject(response.body?.string() ?: "{}")
                                     val tagName = json.optString("tag_name", "")
                                     val htmlUrl = json.optString("html_url", "")
+                                    
+                                    var apkUrl: String? = null
+                                    val assets = json.optJSONArray("assets")
+                                    if (assets != null) {
+                                        for (i in 0 until assets.length()) {
+                                            val asset = assets.getJSONObject(i)
+                                            if (asset.optString("name").endsWith(".apk")) {
+                                                apkUrl = asset.optString("browser_download_url")
+                                                break
+                                            }
+                                        }
+                                    }
+
                                     if (tagName.isNotEmpty() && tagName != "v1.0.0" && tagName != "1.0.0") {
                                         updateMessage = "A new version ($tagName) is available!"
-                                        updateUrl = htmlUrl
+                                        updateUrl = apkUrl ?: htmlUrl
                                     } else {
                                         updateMessage = "You are up to date."
                                         updateUrl = null
@@ -240,8 +255,12 @@ fun SettingsScreen(
             confirmButton = {
                 if (updateUrl != null) {
                     TextButton(onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateUrl))
-                        context.startActivity(intent)
+                        if (updateUrl!!.endsWith(".apk")) {
+                            UpdateManager(context).downloadAndInstallUpdate(updateUrl!!)
+                        } else {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateUrl))
+                            context.startActivity(intent)
+                        }
                         showUpdateDialog = false
                     }) {
                         Text("Download")
