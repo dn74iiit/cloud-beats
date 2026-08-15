@@ -45,6 +45,10 @@ class PlaylistRepository @Inject constructor(
         playlistDao.deletePlaylist(playlistId)
     }
 
+    suspend fun clearPlaylist(playlistId: Long) {
+        playlistDao.clearPlaylist(playlistId)
+    }
+
     suspend fun addSongToPlaylist(playlistId: Long, songId: String) {
         playlistDao.addSongToPlaylist(
             PlaylistSongCrossRef(playlistId = playlistId, songId = songId)

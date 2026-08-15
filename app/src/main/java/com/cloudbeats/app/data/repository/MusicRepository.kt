@@ -115,13 +115,13 @@ class MusicRepository @Inject constructor(
                                 
                                 for (line in lines) {
                                     val filename = line.substringAfterLast("/")
-                                    val title = filename.substringBeforeLast(".")
-                                    val matchedSong = songDao.searchSongsSync(title).firstOrNull()
+                                    val matchedSong = remoteSongs.find { it.oneDrivePath.endsWith(filename) }
                                     if (matchedSong != null) {
                                         songIds.add(matchedSong.oneDriveId)
                                     }
                                 }
                                 
+                                playlistRepository.clearPlaylist(playlistId)
                                 if (songIds.isNotEmpty()) {
                                     playlistRepository.addSongsToPlaylist(playlistId, songIds)
                                 }
