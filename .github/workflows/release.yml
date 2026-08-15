@@ -1,10 +1,13 @@
-name: Create Release
+name: Build and Create Release
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
 
 jobs:
-  release:
+  build-and-release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -12,16 +15,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
+
       - name: Get current date
         id: date
-        run: echo "date=$(date +'%Y-%m-%d-%H%M')" >> $GITHUB_ENV
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0-${{ env.date }}
-          name: Cloud Beats Release
-          body: "Cloud Beats - Latest bug fixes including ExoPlayer queue, missing album art, and playlist duplication."
-          files: release/cloud-beats-release.apk
+          name: "Cloud Beats Update (${{ env.date }})"
+          body: "Auto-generated release from GitHub Actions."
+          files: app/build/outputs/apk/debug/app-debug.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
