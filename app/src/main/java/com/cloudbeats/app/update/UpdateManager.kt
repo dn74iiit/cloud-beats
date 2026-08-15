@@ -24,10 +24,10 @@ class UpdateManager(private val context: Context) {
             .setTitle("Downloading CloudBeats Update")
             .setDescription("Please wait while the new version downloads.")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, expectedFileName)
+            .setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, expectedFileName)
             
         // Delete old apk if exists
-        val oldFile = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), expectedFileName)
+        val oldFile = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), expectedFileName)
         if (oldFile.exists()) {
             oldFile.delete()
         }
@@ -55,7 +55,7 @@ class UpdateManager(private val context: Context) {
     }
 
     private fun installApk() {
-        val apkFile = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), expectedFileName)
+        val apkFile = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), expectedFileName)
         
         if (!apkFile.exists()) {
             Toast.makeText(context, "Failed to find downloaded APK.", Toast.LENGTH_SHORT).show()
@@ -71,7 +71,7 @@ class UpdateManager(private val context: Context) {
         val installIntent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, "application/vnd.android.package-archive")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
 
         try {
