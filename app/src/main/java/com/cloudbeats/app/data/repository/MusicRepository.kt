@@ -114,8 +114,18 @@ class MusicRepository @Inject constructor(
                                 val songIds = mutableListOf<String>()
                                 
                                 for (line in lines) {
-                                    val filename = line.replace("\\", "/").substringAfterLast("/")
-                                    val matchedSong = remoteSongs.find { it.oneDrivePath.endsWith(filename) }
+                                    val rawFilename = line.replace("\\", "/").substringAfterLast("/").trim()
+                                    val decodedFilename = try { 
+                                        java.net.URLDecoder.decode(rawFilename, "UTF-8") 
+                                    } catch(e: Exception) { 
+                                        rawFilename 
+                                    }
+                                    
+                                    val matchedSong = remoteSongs.find { 
+                                        it.oneDrivePath.endsWith(decodedFilename, ignoreCase = true) ||
+                                        it.oneDrivePath.endsWith(rawFilename, ignoreCase = true)
+                                    }
+                                    
                                     if (matchedSong != null) {
                                         songIds.add(matchedSong.oneDriveId)
                                     }
