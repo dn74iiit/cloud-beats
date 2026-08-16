@@ -77,14 +77,13 @@ class UpdateManager(private val context: Context) {
             input.close()
             out.close()
 
-            // The system package installer will display its own UI.
-            // We just need a dummy PendingIntent to satisfy the commit API.
-            val intent = Intent(context, com.cloudbeats.app.MainActivity::class.java)
-            val pendingIntent = android.app.PendingIntent.getActivity(
+            // We must use a BroadcastReceiver to catch the STATUS_PENDING_USER_ACTION from PackageInstaller
+            val intent = Intent(context, InstallReceiver::class.java)
+            val pendingIntent = android.app.PendingIntent.getBroadcast(
                 context,
                 0,
                 intent,
-                android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_MUTABLE
             )
             
             session.commit(pendingIntent.intentSender)

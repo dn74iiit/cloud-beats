@@ -62,6 +62,11 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <!-- Receiver for PackageInstaller native updates -->
+        <receiver
+            android:name=".update.InstallReceiver"
+            android:exported="false" />
+
     </application>
 
 </manifest>
