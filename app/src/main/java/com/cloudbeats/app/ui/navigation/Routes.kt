@@ -10,4 +10,7 @@ object Routes {
     const val SETTINGS = "settings"
     const val NOW_PLAYING = "now_playing"
     const val ONLINE_SEARCH = "online_search"
+    const val PLAYLIST_DETAIL = "playlist_detail/{playlistId}"
+
+    fun createPlaylistDetailRoute(playlistId: Long) = "playlist_detail/$playlistId"
 }

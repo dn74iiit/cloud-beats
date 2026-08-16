@@ -62,6 +62,41 @@ class UpdateManager(private val context: Context) {
             return
         }
 
+        try {
+            val packageInstaller = context.packageManager.packageInstaller
+            val params = android.content.pm.PackageInstaller.SessionParams(
+                android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL
+            )
+            val sessionId = packageInstaller.createSession(params)
+            val session = packageInstaller.openSession(sessionId)
+            
+            val out = session.openWrite("package", 0, -1)
+            val input = java.io.FileInputStream(apkFile)
+            input.copyTo(out)
+            session.fsync(out)
+            input.close()
+            out.close()
+
+            // The system package installer will display its own UI.
+            // We just need a dummy PendingIntent to satisfy the commit API.
+            val intent = Intent(context, com.cloudbeats.app.MainActivity::class.java)
+            val pendingIntent = android.app.PendingIntent.getActivity(
+                context,
+                0,
+                intent,
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+            )
+            
+            session.commit(pendingIntent.intentSender)
+            session.close()
+        } catch (e: Exception) {
+            Toast.makeText(context, "Native installation failed, trying fallback.", Toast.LENGTH_SHORT).show()
+            e.printStackTrace()
+            fallbackInstall(apkFile)
+        }
+    }
+
+    private fun fallbackInstall(apkFile: File) {
         val uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",

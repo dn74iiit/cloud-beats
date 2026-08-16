@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
@@ -63,6 +64,7 @@ fun SongItem(
     onDownloadClick: () -> Unit = {},
     onFavoriteClick: () -> Unit = {},
     onAddToPlaylistClick: () -> Unit = {},
+    onRemoveClick: (() -> Unit)? = null,
     isSelected: Boolean = false,
     onLongClick: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -207,6 +209,22 @@ fun SongItem(
                         onAddToPlaylistClick()
                     }
                 )
+                if (onRemoveClick != null) {
+                    DropdownMenuItem(
+                        text = { Text("Remove from Playlist") },
+                        onClick = {
+                            showMenu = false
+                            onRemoveClick()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    )
+                }
             }
         }
     }

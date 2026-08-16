@@ -26,13 +26,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
+import androidx.navigation.navArgument
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.cloudbeats.app.player.PlaybackManager
 import com.cloudbeats.app.ui.components.MiniPlayerBar
 import com.cloudbeats.app.ui.screens.HomeScreen
 import com.cloudbeats.app.ui.screens.NowPlayingScreen
+import com.cloudbeats.app.ui.screens.PlaylistDetailScreen
 import com.cloudbeats.app.ui.screens.PlaylistsScreen
 import com.cloudbeats.app.ui.screens.SearchScreen
 import com.cloudbeats.app.ui.screens.SettingsScreen
@@ -135,7 +138,22 @@ fun MainNavGraph(
                 }
 
                 composable(Routes.PLAYLISTS) {
-                    PlaylistsScreen()
+                    PlaylistsScreen(
+                        onPlaylistClick = { playlistId ->
+                            navController.navigate(Routes.createPlaylistDetailRoute(playlistId))
+                        }
+                    )
+                }
+
+                composable(
+                    route = Routes.PLAYLIST_DETAIL,
+                    arguments = listOf(navArgument("playlistId") { type = NavType.LongType })
+                ) {
+                    PlaylistDetailScreen(
+                        currentSongId = currentSong?.oneDriveId,
+                        onBackClick = { navController.popBackStack() },
+                        onSongClick = { navController.navigate(Routes.NOW_PLAYING) }
+                    )
                 }
 
                 composable(Routes.SEARCH) {
