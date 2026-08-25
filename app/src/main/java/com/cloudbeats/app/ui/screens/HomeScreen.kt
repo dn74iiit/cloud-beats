@@ -62,7 +62,8 @@ import com.cloudbeats.app.ui.viewmodels.SortOption
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     currentSongId: String?,
-    onSongClick: () -> Unit = {}
+    onSongClick: () -> Unit = {},
+    onOnlineSearchClick: () -> Unit = {}
 ) {
     val songs by viewModel.songs.collectAsState()
     val songCount by viewModel.songCount.collectAsState()
@@ -76,10 +77,6 @@ fun HomeScreen(
 
     var showSearch by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
-    var showSpotifyDialog by remember { mutableStateOf(false) }
-    
-    val spotifyDownloadStatus by viewModel.spotifyDownloadStatus.collectAsState()
-    val isDownloadingSpotify by viewModel.isDownloadingSpotify.collectAsState()
     
     var selectedSongIds by remember { mutableStateOf(setOf<String>()) }
     var showPlaylistDialog by remember { mutableStateOf(false) }
@@ -185,11 +182,11 @@ fun HomeScreen(
                         }
                     }
 
-                    // Spotify Download Button
-                    IconButton(onClick = { showSpotifyDialog = true }) {
+                    // Spotify/iTunes Online Search Download Button
+                    IconButton(onClick = { onOnlineSearchClick() }) {
                         Icon(
                             imageVector = Icons.Default.CloudDownload,
-                            contentDescription = "Download from Spotify"
+                            contentDescription = "Download New Songs"
                         )
                     }
 
@@ -410,61 +407,5 @@ fun HomeScreen(
         )
     }
 
-    if (showSpotifyDialog) {
-        var spotifyUrl by remember { mutableStateOf("") }
-
-        AlertDialog(
-            onDismissRequest = { 
-                showSpotifyDialog = false 
-                viewModel.clearSpotifyDownloadStatus()
-            },
-            title = { Text("Download from Spotify") },
-            text = {
-                Column {
-                    Text("Paste a Spotify link below. The backend service will download the song and upload it to your OneDrive.")
-                    Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedTextField(
-                        value = spotifyUrl,
-                        onValueChange = { spotifyUrl = it },
-                        label = { Text("Spotify URL") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !isDownloadingSpotify
-                    )
-
-                    spotifyDownloadStatus?.let { status ->
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = status,
-                            color = if (status.startsWith("Error")) MaterialTheme.colorScheme.error else Purple60,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = { viewModel.downloadFromSpotify(spotifyUrl) },
-                    enabled = spotifyUrl.isNotBlank() && !isDownloadingSpotify
-                ) {
-                    if (isDownloadingSpotify) {
-                        CircularProgressIndicator(modifier = Modifier.height(16.dp).width(16.dp), strokeWidth = 2.dp)
-                    } else {
-                        Text("Download")
-                    }
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { 
-                        showSpotifyDialog = false 
-                        viewModel.clearSpotifyDownloadStatus()
-                    },
-                    enabled = !isDownloadingSpotify
-                ) {
-                    Text("Close")
-                }
-            }
-        )
-    }
+    // The Spotify download dialog was removed in favor of OnlineSearchScreen
 }

@@ -6,7 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
+import android.provider.Settings
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import java.io.File
@@ -60,6 +62,19 @@ class UpdateManager(private val context: Context) {
         if (!apkFile.exists()) {
             Toast.makeText(context, "Failed to find downloaded APK.", Toast.LENGTH_SHORT).show()
             return
+        }
+
+        // On Android 8.0+ (Oreo), check if we have permission to install packages
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val canInstall = context.packageManager.canRequestPackageInstalls()
+            if (!canInstall) {
+                Toast.makeText(context, "Please allow CloudBeats to install updates.", Toast.LENGTH_LONG).show()
+                val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
+                intent.data = Uri.parse("package:${context.packageName}")
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+                return
+            }
         }
 
         try {

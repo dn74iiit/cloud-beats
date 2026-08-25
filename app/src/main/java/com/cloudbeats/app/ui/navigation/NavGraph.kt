@@ -133,6 +133,9 @@ fun MainNavGraph(
                         currentSongId = currentSong?.oneDriveId,
                         onSongClick = {
                             navController.navigate(Routes.NOW_PLAYING)
+                        },
+                        onOnlineSearchClick = {
+                            navController.navigate(Routes.ONLINE_SEARCH)
                         }
                     )
                 }

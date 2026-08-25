@@ -50,6 +50,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
+import com.cloudbeats.app.BuildConfig
 import com.cloudbeats.app.update.UpdateManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -182,7 +184,10 @@ fun SettingsScreen(
             SettingItem(
                 icon = Icons.Default.Info,
                 title = "Version",
-                subtitle = "1.0.0"
+                subtitle = BuildConfig.VERSION_NAME,
+                onClick = {
+                    Toast.makeText(context, "CloudBeats v${BuildConfig.VERSION_NAME}", Toast.LENGTH_SHORT).show()
+                }
             )
 
             SettingItem(

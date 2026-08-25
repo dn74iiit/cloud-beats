@@ -191,6 +191,7 @@ class MusicRepository @Inject constructor(
                 MediaStore.Audio.Media.TITLE,
                 MediaStore.Audio.Media.ARTIST,
                 MediaStore.Audio.Media.ALBUM,
+                MediaStore.Audio.Media.ALBUM_ID,
                 MediaStore.Audio.Media.DURATION,
                 MediaStore.Audio.Media.SIZE,
                 MediaStore.Audio.Media.DATA,
@@ -211,6 +212,7 @@ class MusicRepository @Inject constructor(
                 val titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
                 val artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
                 val albumCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
+                val albumIdCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
                 val durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
                 val sizeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
                 val dataCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
@@ -222,6 +224,7 @@ class MusicRepository @Inject constructor(
                     val title = cursor.getString(titleCol) ?: "Unknown Title"
                     val artist = cursor.getString(artistCol) ?: "Unknown Artist"
                     val album = cursor.getString(albumCol) ?: ""
+                    val albumId = cursor.getLong(albumIdCol)
                     val duration = cursor.getLong(durationCol)
                     val size = cursor.getLong(sizeCol)
                     val data = cursor.getString(dataCol) ?: ""
@@ -243,7 +246,7 @@ class MusicRepository @Inject constructor(
                             fileSize = size,
                             oneDrivePath = "Local Library",
                             localPath = data,
-                            albumArtUrl = "content://media/external/audio/media/$id",
+                            albumArtUrl = "content://media/external/audio/albumart/$albumId",
                             mimeType = mimeType,
                             fileExtension = extension,
                             dateModified = dateModified,
