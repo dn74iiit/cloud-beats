@@ -92,6 +92,6 @@ interface PlaylistDao {
     suspend fun touchPlaylist(playlistId: Long, timestamp: Long = System.currentTimeMillis())
 
     /** Get a playlist by exact name to prevent duplicates */
-    @Query("SELECT * FROM playlists WHERE name = :name LIMIT 1")
+    @Query("SELECT * FROM playlists WHERE name = :name COLLATE NOCASE LIMIT 1")
     suspend fun getPlaylistByName(name: String): PlaylistEntity?
 }

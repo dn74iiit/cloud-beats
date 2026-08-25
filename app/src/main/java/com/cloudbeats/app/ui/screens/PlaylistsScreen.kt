@@ -62,6 +62,7 @@ fun PlaylistsScreen(
     val playlists by viewModel.playlists.collectAsState()
     var showCreateDialog by remember { mutableStateOf(false) }
     var playlistToDelete by remember { mutableStateOf<PlaylistWithSongs?>(null) }
+    var playlistToRename by remember { mutableStateOf<PlaylistWithSongs?>(null) }
 
     Scaffold(
         topBar = {
@@ -129,7 +130,8 @@ fun PlaylistsScreen(
                         playlistWithSongs = playlistWithSongs,
                         onClick = { onPlaylistClick(playlistWithSongs.playlist.id) },
                         onPlayClick = { viewModel.playPlaylist(playlistWithSongs) },
-                        onDeleteClick = { playlistToDelete = playlistWithSongs }
+                        onDeleteClick = { playlistToDelete = playlistWithSongs },
+                        onRenameClick = { playlistToRename = playlistWithSongs }
                     )
                 }
             }
@@ -194,6 +196,41 @@ fun PlaylistsScreen(
             }
         )
     }
+
+    // Rename confirmation dialog
+    playlistToRename?.let { playlist ->
+        var renameName by remember(playlist) { mutableStateOf(playlist.playlist.name) }
+        AlertDialog(
+            onDismissRequest = { playlistToRename = null },
+            title = { Text("Rename Playlist") },
+            text = {
+                OutlinedTextField(
+                    value = renameName,
+                    onValueChange = { renameName = it },
+                    label = { Text("New name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (renameName.isNotBlank()) {
+                            viewModel.renamePlaylist(playlist.playlist.id, renameName.trim())
+                            playlistToRename = null
+                        }
+                    }
+                ) {
+                    Text("Rename")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { playlistToRename = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -201,7 +238,8 @@ private fun PlaylistCard(
     playlistWithSongs: PlaylistWithSongs,
     onClick: () -> Unit,
     onPlayClick: () -> Unit,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
+    onRenameClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -250,6 +288,15 @@ private fun PlaylistCard(
                 imageVector = Icons.Default.PlayArrow,
                 contentDescription = "Play playlist",
                 tint = Purple60
+            )
+        }
+
+        // Rename button
+        IconButton(onClick = onRenameClick) {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = "Rename playlist",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 

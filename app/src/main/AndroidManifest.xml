@@ -12,6 +12,10 @@
 
     <!-- Post notifications (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    
+    <!-- Read local media -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
     <!-- Wake lock to keep playback alive -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />

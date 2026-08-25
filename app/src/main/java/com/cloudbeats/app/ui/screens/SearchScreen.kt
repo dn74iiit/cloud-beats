@@ -151,6 +151,10 @@ fun SearchScreen(
                             } else {
                                 selectedSongIds + song.oneDriveId
                             }
+                        },
+                        onAddToPlaylistClick = {
+                            selectedSongIds = setOf(song.oneDriveId)
+                            showPlaylistDialog = true
                         }
                     )
                 }
@@ -192,6 +196,10 @@ fun SearchScreen(
                             } else {
                                 selectedSongIds + song.oneDriveId
                             }
+                        },
+                        onAddToPlaylistClick = {
+                            selectedSongIds = setOf(song.oneDriveId)
+                            showPlaylistDialog = true
                         }
                     )
                 }

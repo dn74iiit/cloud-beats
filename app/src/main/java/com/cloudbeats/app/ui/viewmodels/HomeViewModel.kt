@@ -40,7 +40,17 @@ class HomeViewModel @Inject constructor(
     private val _sortOption = MutableStateFlow(SortOption.TITLE)
     val sortOption: StateFlow<SortOption> = _sortOption.asStateFlow()
 
-    val songs: StateFlow<List<SongEntity>> = musicRepository.getAllSongs()
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val songs: StateFlow<List<SongEntity>> = _sortOption
+        .kotlinx.coroutines.flow.flatMapLatest { option ->
+            when (option) {
+                SortOption.TITLE -> musicRepository.getAllSongs()
+                SortOption.ARTIST -> musicRepository.getAllSongsByArtist()
+                SortOption.ALBUM -> musicRepository.getAllSongsByAlbum()
+                SortOption.DATE_ADDED -> musicRepository.getAllSongsByDateAdded()
+                SortOption.MOST_PLAYED -> musicRepository.getMostPlayedSongs()
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val songCount: StateFlow<Int> = musicRepository.getSongCount()
@@ -90,6 +100,7 @@ class HomeViewModel @Inject constructor(
 
     fun syncLibrary() {
         viewModelScope.launch {
+            musicRepository.syncLocalMusic()
             musicRepository.syncFromOneDrive(_folderPath.value)
         }
     }

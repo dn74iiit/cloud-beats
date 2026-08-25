@@ -56,8 +56,9 @@ class SpotifyService @Inject constructor(
     suspend fun searchOnline(query: String): Result<List<OnlineSong>> =
         withContext(Dispatchers.IO) {
             try {
+                val encodedQuery = java.net.URLEncoder.encode(query, "UTF-8")
                 val request = Request.Builder()
-                    .url("$BACKEND_URL/api/search?q=$query")
+                    .url("$BACKEND_URL/api/search?q=$encodedQuery")
                     .get()
                     .build()
 

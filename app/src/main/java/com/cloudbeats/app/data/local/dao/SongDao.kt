@@ -130,7 +130,19 @@ interface SongDao {
     @Query("DELETE FROM songs")
     suspend fun deleteAll()
 
-    /** Delete songs not in the given list of IDs (removes songs deleted from OneDrive) */
-    @Query("DELETE FROM songs WHERE oneDriveId NOT IN (:validIds)")
+    /** Delete OneDrive songs not in the given list of IDs (removes songs deleted from OneDrive) */
+    @Query("DELETE FROM songs WHERE oneDriveId NOT LIKE 'local_%' AND oneDriveId NOT IN (:validIds)")
     suspend fun deleteNotIn(validIds: List<String>)
+    
+    /** Delete all OneDrive songs */
+    @Query("DELETE FROM songs WHERE oneDriveId NOT LIKE 'local_%'")
+    suspend fun deleteAllOneDriveSongs()
+
+    /** Delete local songs not in the given list of IDs (removes songs deleted from device) */
+    @Query("DELETE FROM songs WHERE oneDriveId LIKE 'local_%' AND oneDriveId NOT IN (:validIds)")
+    suspend fun deleteLocalNotIn(validIds: List<String>)
+    
+    /** Delete all local songs */
+    @Query("DELETE FROM songs WHERE oneDriveId LIKE 'local_%'")
+    suspend fun deleteAllLocalSongs()
 }

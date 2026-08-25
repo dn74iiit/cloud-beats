@@ -7,6 +7,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import dagger.hilt.android.qualifiers.ApplicationContext
+import android.content.Context
+import android.os.Environment
+import android.provider.MediaStore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,7 +24,8 @@ import javax.inject.Singleton
 class MusicRepository @Inject constructor(
     private val songDao: SongDao,
     private val oneDriveService: OneDriveService,
-    private val playlistRepository: PlaylistRepository
+    private val playlistRepository: PlaylistRepository,
+    @ApplicationContext private val context: Context
 ) {
     /** Whether a sync operation is in progress */
     private val _isSyncing = MutableStateFlow(false)
@@ -99,6 +106,22 @@ class MusicRepository @Inject constructor(
                     val validIds = remoteSongs.map { it.oneDriveId }
                     if (validIds.isNotEmpty()) {
                         songDao.deleteNotIn(validIds)
+                    } else {
+                        songDao.deleteAllOneDriveSongs()
+                    }
+
+                    // Clean up orphaned downloaded files to fix app size bloat
+                    val downloadDir = context.getExternalFilesDir(Environment.DIRECTORY_MUSIC)
+                        ?: java.io.File(context.filesDir, "music")
+                    
+                    // Create .nomedia so Android MediaStore ignores these files (prevents duplicates)
+                    java.io.File(downloadDir, ".nomedia").createNewFile()
+                    
+                    downloadDir.listFiles()?.forEach { file ->
+                        val fileNameWithoutExt = file.nameWithoutExtension
+                        if (file.name != ".nomedia" && !validIds.contains(fileNameWithoutExt)) {
+                            file.delete()
+                        }
                     }
 
                     // Process Playlists
@@ -149,6 +172,104 @@ class MusicRepository @Inject constructor(
         } catch (e: Exception) {
             _syncError.value = e.message ?: "Sync failed"
             _debugLog.value = "Exception during sync: ${e.message}"
+        } finally {
+            _isSyncing.value = false
+        }
+    }
+
+    /**
+     * Sync local music from the device's MediaStore.
+     */
+    suspend fun syncLocalMusic() = withContext(Dispatchers.IO) {
+        _isSyncing.value = true
+        _debugLog.value = "Scanning local music..."
+        
+        try {
+            val localSongs = mutableListOf<SongEntity>()
+            val projection = arrayOf(
+                MediaStore.Audio.Media._ID,
+                MediaStore.Audio.Media.TITLE,
+                MediaStore.Audio.Media.ARTIST,
+                MediaStore.Audio.Media.ALBUM,
+                MediaStore.Audio.Media.DURATION,
+                MediaStore.Audio.Media.SIZE,
+                MediaStore.Audio.Media.DATA,
+                MediaStore.Audio.Media.MIME_TYPE,
+                MediaStore.Audio.Media.DATE_MODIFIED
+            )
+            
+            val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
+            
+            context.contentResolver.query(
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                projection,
+                selection,
+                null,
+                null
+            )?.use { cursor ->
+                val idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+                val titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
+                val artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
+                val albumCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
+                val durationCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
+                val sizeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
+                val dataCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+                val mimeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
+                val dateCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
+
+                while (cursor.moveToNext()) {
+                    val id = cursor.getLong(idCol)
+                    val title = cursor.getString(titleCol) ?: "Unknown Title"
+                    val artist = cursor.getString(artistCol) ?: "Unknown Artist"
+                    val album = cursor.getString(albumCol) ?: ""
+                    val duration = cursor.getLong(durationCol)
+                    val size = cursor.getLong(sizeCol)
+                    val data = cursor.getString(dataCol) ?: ""
+                    val mimeType = cursor.getString(mimeCol) ?: "audio/mpeg"
+                    val dateModified = cursor.getLong(dateCol) * 1000L
+
+                    // Ignore files downloaded by the app itself to prevent duplicates
+                    if (data.isNotEmpty() && !data.contains(context.packageName)) {
+                        val extension = data.substringAfterLast('.', "").lowercase()
+                        val oneDriveId = "local_$id"
+                        val existingSong = songDao.getSongById(oneDriveId)
+                        
+                        val song = SongEntity(
+                            oneDriveId = oneDriveId,
+                            title = title,
+                            artist = artist,
+                            album = album,
+                            duration = duration,
+                            fileSize = size,
+                            oneDrivePath = "Local Library",
+                            localPath = data,
+                            albumArtUrl = "content://media/external/audio/media/$id",
+                            mimeType = mimeType,
+                            fileExtension = extension,
+                            dateModified = dateModified,
+                            lastSynced = System.currentTimeMillis(),
+                            playCount = existingSong?.playCount ?: 0,
+                            lastPlayedAt = existingSong?.lastPlayedAt,
+                            isFavorite = existingSong?.isFavorite ?: false
+                        )
+                        localSongs.add(song)
+                    }
+                }
+            }
+            
+            _debugLog.value = "Found ${localSongs.size} local songs. Saving..."
+            songDao.insertAll(localSongs)
+            
+            val validLocalIds = localSongs.map { it.oneDriveId }
+            if (validLocalIds.isNotEmpty()) {
+                songDao.deleteLocalNotIn(validLocalIds)
+            } else {
+                songDao.deleteAllLocalSongs()
+            }
+            
+        } catch (e: Exception) {
+            _syncError.value = e.message ?: "Local sync failed"
+            _debugLog.value = "Local sync error: ${e.message}"
         } finally {
             _isSyncing.value = false
         }

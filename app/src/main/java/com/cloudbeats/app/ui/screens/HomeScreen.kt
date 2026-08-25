@@ -1,5 +1,9 @@
 package com.cloudbeats.app.ui.screens
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -79,6 +83,23 @@ fun HomeScreen(
     
     var selectedSongIds by remember { mutableStateOf(setOf<String>()) }
     var showPlaylistDialog by remember { mutableStateOf(false) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { _ ->
+            // Proceed with sync regardless of outcome; if denied, local sync just won't find anything
+            viewModel.syncLibrary()
+        }
+    )
+
+    fun handleSyncClick() {
+        val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            arrayOf(Manifest.permission.READ_MEDIA_AUDIO)
+        } else {
+            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+        permissionLauncher.launch(permissions)
+    }
 
     Scaffold(
         topBar = {
@@ -173,7 +194,7 @@ fun HomeScreen(
                     }
 
                     // Sync button
-                    IconButton(onClick = { viewModel.syncLibrary() }) {
+                    IconButton(onClick = { handleSyncClick() }) {
                         if (isSyncing) {
                             CircularProgressIndicator(
                                 modifier = Modifier.padding(8.dp),
@@ -301,6 +322,10 @@ fun HomeScreen(
                             },
                             onFavoriteClick = {
                                 viewModel.toggleFavorite(song.oneDriveId)
+                            },
+                            onAddToPlaylistClick = {
+                                selectedSongIds = setOf(song.oneDriveId)
+                                showPlaylistDialog = true
                             }
                         )
                     }
