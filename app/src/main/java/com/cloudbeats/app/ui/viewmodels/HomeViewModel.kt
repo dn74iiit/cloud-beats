@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -42,7 +43,7 @@ class HomeViewModel @Inject constructor(
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val songs: StateFlow<List<SongEntity>> = _sortOption
-        .kotlinx.coroutines.flow.flatMapLatest { option ->
+        .flatMapLatest { option ->
             when (option) {
                 SortOption.TITLE -> musicRepository.getAllSongs()
                 SortOption.ARTIST -> musicRepository.getAllSongsByArtist()

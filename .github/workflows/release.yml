@@ -36,9 +36,9 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "v1.0.9-${{ env.date }}"
-          name: "Cloud Beats Update 1.0.9 (${{ env.date }})"
-          body: "Includes Local Music Sync, sorting fixes, and playlist duplicate fixes."
+          tag_name: "v1.0.10-${{ env.date }}"
+          name: "Cloud Beats Update 1.0.10 (${{ env.date }})"
+          body: "Fixes build error on GitHub Actions."
           files: app/build/outputs/apk/debug/app-debug.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
