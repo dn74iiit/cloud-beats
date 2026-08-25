@@ -36,9 +36,9 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "v1.0.11-${{ env.date }}"
-          name: "Cloud Beats Update 1.0.11 (${{ env.date }})"
-          body: "Fixes Settings UI, In-App Updates, Album Covers, and Online Search navigation."
+          tag_name: "v1.0.12-${{ env.date }}"
+          name: "Cloud Beats Update 1.0.12 (${{ env.date }})"
+          body: "Fixes Settings UI scrolling, In-App Updates loop, Album Covers, and improves Online Search with iTunes API."
           files: app/build/outputs/apk/debug/app-debug.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

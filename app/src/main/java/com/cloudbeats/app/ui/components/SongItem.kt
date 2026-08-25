@@ -49,6 +49,17 @@ import com.cloudbeats.app.ui.theme.DownloadedBadge
 import com.cloudbeats.app.ui.theme.Purple60
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
+import android.media.MediaMetadataRetriever
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import android.graphics.BitmapFactory
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.foundation.Image
 
 /**
  * Reusable song list item with album art placeholder, metadata,
@@ -95,13 +106,15 @@ fun SongItem(
                 .background(DarkSurfaceElevated),
             contentAlignment = Alignment.Center
         ) {
-            if (song.albumArtUrl != null) {
+            if (song.albumArtUrl != null && !song.albumArtUrl.startsWith("content://media")) {
                 AsyncImage(
                     model = song.albumArtUrl,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
+            } else if (song.localPath != null || (song.albumArtUrl != null && song.albumArtUrl.startsWith("content://"))) {
+                LocalAlbumArt(song = song, isCurrentlyPlaying = isCurrentlyPlaying)
             } else {
                 Icon(
                     imageVector = Icons.Default.MusicNote,
@@ -229,3 +242,61 @@ fun SongItem(
         }
     }
 }
+
+@Composable
+fun LocalAlbumArt(song: SongEntity, isCurrentlyPlaying: Boolean) {
+    var artworkBytes by remember(song.localPath, song.albumArtUrl) { mutableStateOf<ByteArray?>(null) }
+    var loaded by remember(song.localPath, song.albumArtUrl) { mutableStateOf(false) }
+
+    LaunchedEffect(song.localPath, song.albumArtUrl) {
+        if (!loaded) {
+            withContext(Dispatchers.IO) {
+                try {
+                    val retriever = MediaMetadataRetriever()
+                    if (song.localPath != null) {
+                        retriever.setDataSource(song.localPath)
+                    } else if (song.albumArtUrl != null && song.albumArtUrl.startsWith("content://")) {
+                        // For cases where we have a content URI but no local path
+                        // This usually won't happen because local sync sets localPath
+                    }
+                    val art = retriever.embeddedPicture
+                    retriever.release()
+                    artworkBytes = art
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    loaded = true
+                }
+            }
+        }
+    }
+
+    if (artworkBytes != null) {
+        val bitmap = remember(artworkBytes) {
+            BitmapFactory.decodeByteArray(artworkBytes, 0, artworkBytes!!.size)?.asImageBitmap()
+        }
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            DefaultAlbumArtIcon(isCurrentlyPlaying)
+        }
+    } else {
+        DefaultAlbumArtIcon(isCurrentlyPlaying)
+    }
+}
+
+@Composable
+fun DefaultAlbumArtIcon(isCurrentlyPlaying: Boolean) {
+    Icon(
+        imageVector = Icons.Default.MusicNote,
+        contentDescription = null,
+        tint = if (isCurrentlyPlaying) Purple60 else MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.size(24.dp)
+    )
+}
+

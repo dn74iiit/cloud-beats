@@ -246,7 +246,7 @@ class MusicRepository @Inject constructor(
                             fileSize = size,
                             oneDrivePath = "Local Library",
                             localPath = data,
-                            albumArtUrl = "content://media/external/audio/albumart/$albumId",
+                            albumArtUrl = "content://media/external/audio/media/$id",
                             mimeType = mimeType,
                             fileExtension = extension,
                             dateModified = dateModified,

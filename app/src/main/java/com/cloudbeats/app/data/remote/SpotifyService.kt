@@ -58,7 +58,7 @@ class SpotifyService @Inject constructor(
             try {
                 val encodedQuery = java.net.URLEncoder.encode(query, "UTF-8")
                 val request = Request.Builder()
-                    .url("$BACKEND_URL/api/search?q=$encodedQuery")
+                    .url("https://itunes.apple.com/search?term=$encodedQuery&media=music&limit=20")
                     .get()
                     .build()
 
@@ -73,14 +73,22 @@ class SpotifyService @Inject constructor(
                     if (resultsArray != null) {
                         for (i in 0 until resultsArray.length()) {
                             val obj = resultsArray.getJSONObject(i)
-                            songs.add(
-                                OnlineSong(
-                                    title = obj.optString("title", ""),
-                                    artist = obj.optString("artist", ""),
-                                    albumArt = obj.optString("album_art", ""),
-                                    url = obj.optString("url", "")
+                            val title = obj.optString("trackName", obj.optString("collectionName", "Unknown Title"))
+                            val artist = obj.optString("artistName", "Unknown Artist")
+                            // Get a higher quality album art (600x600 instead of 100x100)
+                            val albumArt = obj.optString("artworkUrl100", "").replace("100x100bb", "600x600bb")
+                            
+                            // Prevent duplicates in the results
+                            if (songs.none { it.title == title && it.artist == artist }) {
+                                songs.add(
+                                    OnlineSong(
+                                        title = title,
+                                        artist = artist,
+                                        albumArt = albumArt,
+                                        url = "ytsearch1: $artist $title audio"
+                                    )
                                 )
-                            )
+                            }
                         }
                     }
                     Result.success(songs)

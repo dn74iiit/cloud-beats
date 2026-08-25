@@ -95,8 +95,8 @@ fun SettingsScreen(
     ) { padding ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(padding)
+                .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
@@ -221,7 +221,9 @@ fun SettingsScreen(
                                         }
                                     }
 
-                                    if (tagName.isNotEmpty() && tagName != "v1.0.0" && tagName != "1.0.0") {
+                                    val currentVersion = BuildConfig.VERSION_NAME
+                                    val currentVersionCode = "v$currentVersion"
+                                    if (tagName.isNotEmpty() && tagName != currentVersion && tagName != currentVersionCode) {
                                         updateMessage = "A new version ($tagName) is available!"
                                         updateUrl = apkUrl ?: htmlUrl
                                     } else {
