@@ -223,7 +223,7 @@ fun SettingsScreen(
 
                                     val currentVersion = BuildConfig.VERSION_NAME
                                     val currentVersionCode = "v$currentVersion"
-                                    if (tagName.isNotEmpty() && tagName != currentVersion && tagName != currentVersionCode) {
+                                    if (tagName.isNotEmpty() && !tagName.startsWith(currentVersion) && !tagName.startsWith(currentVersionCode)) {
                                         updateMessage = "A new version ($tagName) is available!"
                                         updateUrl = apkUrl ?: htmlUrl
                                     } else {

@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.cloudbeats.app.data.local.entities.SongEntity
@@ -247,17 +248,17 @@ fun SongItem(
 fun LocalAlbumArt(song: SongEntity, isCurrentlyPlaying: Boolean) {
     var artworkBytes by remember(song.localPath, song.albumArtUrl) { mutableStateOf<ByteArray?>(null) }
     var loaded by remember(song.localPath, song.albumArtUrl) { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(song.localPath, song.albumArtUrl) {
         if (!loaded) {
             withContext(Dispatchers.IO) {
                 try {
                     val retriever = MediaMetadataRetriever()
-                    if (song.localPath != null) {
+                    if (song.albumArtUrl != null && song.albumArtUrl.startsWith("content://")) {
+                        retriever.setDataSource(context, android.net.Uri.parse(song.albumArtUrl))
+                    } else if (song.localPath != null) {
                         retriever.setDataSource(song.localPath)
-                    } else if (song.albumArtUrl != null && song.albumArtUrl.startsWith("content://")) {
-                        // For cases where we have a content URI but no local path
-                        // This usually won't happen because local sync sets localPath
                     }
                     val art = retriever.embeddedPicture
                     retriever.release()
